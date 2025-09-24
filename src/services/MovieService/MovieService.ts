@@ -7,7 +7,6 @@ import type {
   Show,
   ShowWithGenreAndVideo,
 } from '@/types';
-import { type AxiosResponse } from 'axios';
 import BaseService from '../BaseService/BaseService';
 import {
   RequestType,
@@ -36,7 +35,7 @@ class MovieService extends BaseService {
     const response = data
       .filter(this.isFulfilled)
       .map(
-        (item: PromiseFulfilledResult<AxiosResponse<Show>>) => item.value?.data,
+        (item: PromiseFulfilledResult<Show>) => item.value,
       )
       .filter((item: Show) => {
         return pathname.includes(getSlug(item.id, getNameFromShow(item)));
@@ -47,41 +46,44 @@ class MovieService extends BaseService {
     return Promise.resolve<Show>(response[0]);
   }
 
-  static findMovie = cache(async (id: number) => {
-    return this.axios(baseUrl).get<Show>(
-      `/movie/${id}?append_to_response=keywords`,
-    );
+  static findMovie = cache(async (id: number): Promise<Show> => {
+    const url = `${baseUrl}/movie/${id}?append_to_response=keywords`;
+    const response = await this.fetchWithAuth(url);
+    return response.json();
   });
 
-  static findTvSeries = cache(async (id: number) => {
-    return this.axios(baseUrl).get<Show>(
-      `/tv/${id}?append_to_response=keywords`,
-    );
+  static findTvSeries = cache(async (id: number): Promise<Show> => {
+    const url = `${baseUrl}/tv/${id}?append_to_response=keywords`;
+    const response = await this.fetchWithAuth(url);
+    return response.json();
   });
 
   static async getKeywords(
     id: number,
     type: 'tv' | 'movie',
-  ): Promise<AxiosResponse<KeyWordResponse>> {
-    return this.axios(baseUrl).get<KeyWordResponse>(`/${type}/${id}/keywords`);
+  ): Promise<KeyWordResponse> {
+    const url = `${baseUrl}/${type}/${id}/keywords`;
+    const response = await this.fetchWithAuth(url);
+    return response.json();
   }
 
   static async getSeasons(
     id: number,
     season: number,
-  ): Promise<AxiosResponse<ISeason>> {
-    return this.axios(baseUrl).get<ISeason>(`/tv/${id}/season/${season}`);
+  ): Promise<ISeason> {
+    const url = `${baseUrl}/tv/${id}/season/${season}`;
+    const response = await this.fetchWithAuth(url);
+    return response.json();
   }
 
-  static findMovieByIdAndType = cache(async (id: number, type: string) => {
-    const params: Record<string, string> = {
+  static findMovieByIdAndType = cache(async (id: number, type: string): Promise<ShowWithGenreAndVideo> => {
+    const params = new URLSearchParams({
       language: 'en-US',
       append_to_response: 'videos,keywords',
-    };
-    const response: AxiosResponse<ShowWithGenreAndVideo> = await this.axios(
-      baseUrl,
-    ).get<ShowWithGenreAndVideo>(`/${type}/${id}`, { params });
-    return Promise.resolve(response.data);
+    });
+    const url = `${baseUrl}/${type}/${id}?${params.toString()}`;
+    const response = await this.fetchWithAuth(url);
+    return response.json();
   });
 
   static urlBuilder(req: TmdbRequest) {
@@ -137,15 +139,17 @@ class MovieService extends BaseService {
     }
   }
 
-  static executeRequest(req: {
+  static executeRequest = cache(async (req: {
     requestType: RequestType;
     mediaType: MediaType;
     page?: number;
-  }) {
-    return this.axios(baseUrl).get<TmdbPagingResponse>(this.urlBuilder(req));
-  }
+  }): Promise<TmdbPagingResponse> => {
+    const url = `${baseUrl}${this.urlBuilder(req)}`;
+    const response = await this.fetchWithAuth(url);
+    return response.json();
+  });
 
-  static getShows = cache(async (requests: ShowRequest[]) => {
+  static getShows = cache(async (requests: ShowRequest[]): Promise<CategorizedShows[]> => {
     const shows: CategorizedShows[] = [];
     const promises = requests.map((m) => this.executeRequest(m.req));
     const responses = await Promise.allSettled(promises);
@@ -163,13 +167,13 @@ class MovieService extends BaseService {
           requestTypesNeedUpdateMediaType.indexOf(requests[i].req.requestType) >
           -1
         ) {
-          res.value.data.results.forEach(
-            (f) => (f.media_type = requests[i].req.mediaType),
+          res.value.results.forEach(
+            (f: Show) => (f.media_type = requests[i].req.mediaType),
           );
         }
         shows.push({
           title: requests[i].title,
-          shows: res.value.data.results,
+          shows: res.value.results,
           visible: requests[i].visible,
         });
       } else {
@@ -179,14 +183,17 @@ class MovieService extends BaseService {
     return shows;
   });
 
-  static searchMovies = cache(async (query: string, page?: number) => {
-    const { data } = await this.axios(baseUrl).get<TmdbPagingResponse>(
-      `/search/multi?query=${encodeURIComponent(query)}&language=en-US&page=${
-        page ?? 1
-      }`,
-    );
+  static searchMovies = cache(async (query: string, page?: number): Promise<TmdbPagingResponse> => {
+    const params = new URLSearchParams({
+      query: query,
+      language: 'en-US',
+      page: (page ?? 1).toString(),
+    });
+    const url = `${baseUrl}/search/multi?${params.toString()}`;
+    const response = await this.fetchWithAuth(url);
+    const data = await response.json();
 
-    data.results.sort((a, b) => {
+    data.results.sort((a: Show, b: Show) => {
       return b.popularity - a.popularity;
     });
     return data;

@@ -1,9 +1,3 @@
-import axios, {
-  type AxiosRequestConfig,
-  type AxiosError,
-  type AxiosInstance,
-  type InternalAxiosRequestConfig,
-} from 'axios';
 import { env } from '@/env.mjs';
 
 /**
@@ -16,42 +10,27 @@ class BaseService {
     }
   }
 
-  static axios(baseUrl: string) {
-    const instanceConfig: AxiosRequestConfig = this.getConfig(baseUrl);
-    const instance: AxiosInstance = axios.create(instanceConfig);
+  static async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    const headers = new Headers(options.headers);
+    if (url.includes('themoviedb')) {
+      headers.set('Authorization', `Bearer ${env.NEXT_PUBLIC_TMDB_TOKEN}`);
+    }
+    headers.set('Content-Type', 'application/json');
 
-    const onRequest = (
-      config: InternalAxiosRequestConfig,
-    ): InternalAxiosRequestConfig => {
-      if (config.baseURL?.includes('themoviedb')) {
-        // const params = config.params as Record<string, unknown>;
-        // config.params = { ...params, api_key: env.NEXT_PUBLIC_TMDB_API_KEY };
-        config.headers.Authorization = `Bearer ${env.NEXT_PUBLIC_TMDB_TOKEN}`;
-      }
-      return config;
+    const config: RequestInit = {
+      ...options,
+      headers,
+      signal: options.signal || AbortSignal.timeout(15000),
     };
 
-    const onErrorResponse = (
-      error: AxiosError | Error,
-    ): Promise<AxiosError> => {
-      console.error(`error in request: ${error.message}`);
-      return Promise.reject(error);
-    };
+    const response = await fetch(url, config);
 
-    instance.interceptors.request.use(onRequest, onErrorResponse);
+    if (!response.ok) {
+      console.error(`error in request: ${response.status} ${response.statusText}`);
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-    return instance;
-  }
-
-  static getConfig(baseUrl: string): AxiosRequestConfig {
-    return {
-      timeout: 15000,
-      baseURL: baseUrl,
-      responseType: 'json',
-      maxContentLength: 100000,
-      validateStatus: (status: number) => status >= 200 && status < 300,
-      maxRedirects: 5,
-    };
+    return response;
   }
 
   static isRejected = (
