@@ -62,7 +62,7 @@ const ShowModal = () => {
   const IS_MOBILE: boolean = isMobile();
 
   const [trailer, setTrailer] = React.useState('');
-  const [isPlaying, setPlaying] = React.useState(true);
+  const [isPlaying] = React.useState(true);
   const [genres, setGenres] = React.useState<Genre[]>([]);
   const [isAnime, setIsAnime] = React.useState<boolean>(false);
   const [isMuted, setIsMuted] = React.useState<boolean>(

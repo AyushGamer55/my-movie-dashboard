@@ -25,6 +25,8 @@ const config = {
       },
     ],
     "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+    "@typescript-eslint/triple-slash-reference": "off", // Allow Next.js generated triple slash references
+    "react-hooks/exhaustive-deps": "warn", // Changed from default strict checking
   },
 };
 
