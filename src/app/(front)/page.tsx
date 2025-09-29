@@ -8,6 +8,7 @@ import Link from 'next/link';
 export default function Index() {
   return (
     <>
+      <div className="fixed inset-0 z-[-1] bg-[url('/images/moviebg.png')] bg-cover bg-center opacity-20"></div>
       <section
         id="hero"
         aria-labelledby="hero-heading"

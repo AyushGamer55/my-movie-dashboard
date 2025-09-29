@@ -8,9 +8,10 @@ import {
   getSearchValue,
   handleDefaultSearchBtn,
   handleDefaultSearchInp,
+  getSlug,
+  getNameFromShow,
 } from '@/lib/utils';
 import { siteConfig } from '@/configs/site';
-import { Icons } from '@/components/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,14 +21,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
+import { PlayIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSearchStore } from '@/stores/search';
 import { ModeToggle as ThemeToggle } from '@/components/theme-toggle';
 import { DebouncedInput } from '@/components/debounced-input';
 import MovieService from '@/services/MovieService';
+import { RequestType } from '@/enums/request-type';
+import { MediaType } from '@/types';
 
 interface MainNavProps {
-  items?: NavItem[];
+  readonly items?: NavItem[];
 }
 
 interface SearchResult {
@@ -40,6 +44,67 @@ export function MainNav({ items }: MainNavProps) {
   // search store
   const searchStore = useSearchStore();
   const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isRolling, setIsRolling] = React.useState(false);
+
+  const handleRandom = async () => {
+    setIsRolling(true);
+    try {
+      const movieReq = {
+        requestType: RequestType.POPULAR,
+        mediaType: MediaType.MOVIE as MediaType,
+        page: 1,
+      };
+      const tvReq = {
+        requestType: RequestType.POPULAR,
+        mediaType: MediaType.TV as MediaType,
+        page: 1,
+      };
+      const animeReq = {
+        requestType: RequestType.ANIME_TRENDING,
+        mediaType: MediaType.TV as MediaType,
+        page: 1,
+      };
+
+      const [moviesRes, tvRes, animeRes] = await Promise.all([
+        MovieService.executeRequest(movieReq),
+        MovieService.executeRequest(tvReq),
+        MovieService.executeRequest(animeReq),
+      ]);
+
+      const allShows = [
+        ...moviesRes.results.map((show) => ({ ...show, type: 'movie' })),
+        ...tvRes.results.map((show) => ({ ...show, type: 'tv' })),
+        ...animeRes.results.map((show) => ({ ...show, type: 'anime' })),
+      ].filter((show) => show.id);
+
+      if (!allShows.length) {
+        setIsRolling(false);
+        return;
+      }
+
+      const crypto = window.crypto || (window as any).msCrypto;
+      const array = new Uint32Array(1);
+      crypto.getRandomValues(array);
+      const randomIndex = array[0] % allShows.length;
+      const randomShow = allShows[randomIndex];
+
+      let url: string;
+
+      if (randomShow.type === 'movie') {
+        url = `/watch/movie/${getSlug(randomShow.id, getNameFromShow(randomShow))}`;
+      } else if (randomShow.type === 'anime') {
+        url = `/watch/anime/${getSlug(randomShow.id, getNameFromShow(randomShow))}`;
+      } else {
+        url = `/watch/tv/${getSlug(randomShow.id, getNameFromShow(randomShow))}`;
+      }
+
+      router.push(url);
+    } catch {
+      // Error fetching random show
+    } finally {
+      setTimeout(() => setIsRolling(false), 1500);
+    }
+  };
 
   React.useEffect(() => {
     window.addEventListener('popstate', handlePopstateEvent, false);
@@ -67,7 +132,7 @@ export function MainNav({ items }: MainNavProps) {
       }, 20);
       MovieService.searchMovies(search)
         .then((response: SearchResult) => {
-          void searchStore.setShows(response.results);
+          searchStore.setShows(response.results);
         })
         .catch((_e) => {})
         .finally(() => searchStore.setLoading(false));
@@ -94,7 +159,7 @@ export function MainNav({ items }: MainNavProps) {
     searchStore.setLoading(true);
     const shows = await MovieService.searchMovies(value);
     searchStore.setLoading(false);
-    void searchStore.setShows(shows.results);
+    searchStore.setShows(shows.results);
 
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -127,7 +192,7 @@ export function MainNav({ items }: MainNavProps) {
           className="hidden md:block"
           onClick={() => handleChangeStatusOpen(false)}>
           <div className="flex items-center space-x-2">
-            <Icons.logo className="h-6 w-6" aria-hidden="true" />
+            <PlayIcon className="h-6 w-6" aria-hidden="true" />
             <span className="inline-block font-bold">{siteConfig.name}</span>
             <span className="sr-only">Home</span>
           </div>
@@ -135,10 +200,10 @@ export function MainNav({ items }: MainNavProps) {
         {items?.length ? (
           <nav className="hidden gap-6 md:flex">
             {items?.map(
-              (item, index) =>
+              (item) =>
                 item.href && (
                   <Link
-                    key={index}
+                    key={item.title}
                     href={item.href}
                     className={cn(
                       'flex items-center text-sm font-medium text-foreground/60 transition hover:text-foreground/80',
@@ -160,7 +225,7 @@ export function MainNav({ items }: MainNavProps) {
                 className="flex items-center space-x-2 px-0 hover:bg-transparent focus:ring-0"
                 // className="h-auto px-2 py-1.5 text-base hover:bg-neutral-800 focus:ring-0 dark:hover:bg-neutral-800 lg:hidden"
               >
-                <Icons.logo className="h-6 w-6" />
+                <PlayIcon className="h-6 w-6" />
                 <span className="text-base font-bold">Menu</span>
               </Button>
             </DropdownMenuTrigger>
@@ -182,9 +247,9 @@ export function MainNav({ items }: MainNavProps) {
                 </Link>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {items?.map((item, index) => (
+              {items?.map((item) => (
                 <DropdownMenuItem
-                  key={index}
+                  key={item.title}
                   asChild
                   className="items-center justify-center">
                   {item.href && (
@@ -218,13 +283,13 @@ export function MainNav({ items }: MainNavProps) {
           onChangeStatusOpen={handleChangeStatusOpen}
           containerClassName={cn(path === '/' ? 'hidden' : 'flex')}
         />
-        <Link
-          rel="noreferrer"
-          target="_blank"
-          href={siteConfig.links.github}
-          className={cn(path === '/' ? 'flex' : 'hidden')}>
-          <Icons.gitHub className="h-5 w-5 hover:bg-transparent" />
-        </Link>
+        <Button
+          variant="ghost"
+          onClick={handleRandom}
+          disabled={isRolling}
+          className="h-5 w-5 p-0 text-lg">
+          <span className={cn(isRolling && 'animate-spin')}>🎲</span>
+        </Button>
         <ThemeToggle />
       </div>
     </nav>

@@ -64,18 +64,26 @@ export const metadata: Metadata = {
     creator: siteConfig.author,
   },
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: '/apple-touch-icon.png',
   },
   other: { referrer: 'no-referrer-when-downgrade' },
 };
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: React.ReactNode;
-}) {
+}
+
+export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
     <html lang="en" suppressHydrationWarning={true}>
+      <head>
+        <link rel="manifest" href="/site.webmanifest" />
+      </head>
       <body
         suppressHydrationWarning={true}
         className={cn(
