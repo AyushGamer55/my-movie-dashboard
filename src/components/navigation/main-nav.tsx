@@ -69,9 +69,7 @@ export function MainNav({ items }: MainNavProps) {
         .then((response: SearchResult) => {
           void searchStore.setShows(response.results);
         })
-        .catch((e) => {
-          console.error(e);
-        })
+        .catch((_e) => {})
         .finally(() => searchStore.setLoading(false));
     }
   };

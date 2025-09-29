@@ -40,9 +40,7 @@ const Hero = ({ randomShow }: HeroProps) => {
         .then((data: Show) => {
           useModalStore.setState({ show: data, open: true, play: true });
         })
-        .catch((error) => {
-          console.error(`findMovie: `, error);
-        });
+        .catch((_error) => {});
     }
   };
 

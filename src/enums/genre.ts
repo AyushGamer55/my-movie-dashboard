@@ -1,7 +1,5 @@
 export enum Genre {
   ACTION = 28,
-  ADVENTURE = 12,
-  ANIMATION = 16,
   COMEDY = 35,
   CRIME = 80,
   DOCUMENTARY = 99,

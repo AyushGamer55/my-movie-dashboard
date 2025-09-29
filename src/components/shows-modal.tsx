@@ -27,7 +27,7 @@ type YouTubePlayer = {
   mute: () => void;
   unMute: () => void;
   playVideo: () => void;
-  seekTo: (value: number) => void;
+  seekTo: (_value: number) => void;
   container: HTMLDivElement;
   internalPlayer: YouTubePlayer;
 };
@@ -165,8 +165,8 @@ const ShowModal = () => {
     const type = isAnime
       ? 'anime'
       : modalStore.show?.media_type === MediaType.MOVIE
-      ? 'movie'
-      : 'tv';
+        ? 'movie'
+        : 'tv';
     let id = `${modalStore.show?.id}`;
     if (isAnime) {
       const prefix: string =

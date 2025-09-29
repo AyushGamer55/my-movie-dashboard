@@ -10,7 +10,7 @@ import {
 
 interface SeasonProps {
   seasons: ISeason[];
-  onChangeEpisode: (episode: IEpisode) => void;
+  onChangeEpisode: (_episode: IEpisode) => void;
 }
 
 export default function Season(props: SeasonProps) {
