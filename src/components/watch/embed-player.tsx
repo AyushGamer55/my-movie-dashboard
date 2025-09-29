@@ -4,7 +4,7 @@ import Loading from '../ui/loading';
 import { useRouter } from 'next/navigation';
 import { MediaType, type IEpisode, type ISeason, type Show } from '@/types';
 import MovieService from '@/services/MovieService';
-import { type AxiosResponse } from 'axios';
+
 import Season from '../season';
 
 interface EmbedPlayerProps {
@@ -53,8 +53,7 @@ function EmbedPlayer(props: EmbedPlayerProps) {
 
   const handleAnime = async (movieId: string) => {
     const id = Number(movieId.replace('t-', ''));
-    const response: AxiosResponse<Show> = await MovieService.findTvSeries(id);
-    const { data } = response;
+    const data: Show = await MovieService.findTvSeries(id);
     if (!data?.seasons?.length) {
       return;
     }
@@ -66,9 +65,7 @@ function EmbedPlayer(props: EmbedPlayerProps) {
     });
 
     const seasonWithEpisodes = await Promise.all(promises);
-    setSeasons(
-      seasonWithEpisodes.map((res: AxiosResponse<ISeason>) => res.data),
-    );
+    setSeasons(seasonWithEpisodes.map((res: ISeason) => res));
     handleSetIframeUrl(
       `https://vidsrc.cc/v2/embed/anime/tmdb${id}/1/sub?autoPlay=false`,
     );

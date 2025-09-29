@@ -8,7 +8,7 @@ import {
   type KeyWordResponse,
   type Show,
 } from '@/types';
-import { type AxiosResponse } from 'axios';
+
 import { clsx, type ClassValue } from 'clsx';
 import { cache } from 'react';
 import { twMerge } from 'tailwind-merge';
@@ -138,17 +138,16 @@ export const handleMetadata = cache(
     let keywords: string[] = [];
     let data: Show | null = null;
     try {
-      const response: AxiosResponse<Show> =
+      data =
         'tv' === type
           ? await MovieService.findTvSeries(movieId)
           : await MovieService.findMovie(movieId);
-      data = response.data;
-      const keywordResponse: AxiosResponse<KeyWordResponse> =
-        await MovieService.getKeywords(movieId, type);
+      const keywordResponse: KeyWordResponse = await MovieService.getKeywords(
+        movieId,
+        type,
+      );
       const res =
-        type === 'tv'
-          ? keywordResponse.data.results
-          : keywordResponse.data.keywords;
+        type === 'tv' ? keywordResponse.results : keywordResponse.keywords;
       keywords = res.map((item: KeyWord) => item.name);
     } catch (error) {
       console.error(error);

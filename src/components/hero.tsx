@@ -6,7 +6,6 @@ import MovieService from '@/services/MovieService';
 import { useModalStore } from '@/stores/modal';
 import { useSearchStore } from '@/stores/search';
 import { MediaType, type Show } from '@/types';
-import { type AxiosResponse } from 'axios';
 import Link from 'next/link';
 import React from 'react';
 import CustomImage from './custom-image';
@@ -34,14 +33,11 @@ const Hero = ({ randomShow }: HeroProps) => {
       if (!movieId) {
         return;
       }
-      const findMovie: Promise<AxiosResponse<Show>> = pathname.includes(
-        '/tv-shows',
-      )
+      const findMovie: Promise<Show> = pathname.includes('/tv-shows')
         ? MovieService.findTvSeries(movieId)
         : MovieService.findMovie(movieId);
       findMovie
-        .then((response: AxiosResponse<Show>) => {
-          const { data } = response;
+        .then((data: Show) => {
           useModalStore.setState({ show: data, open: true, play: true });
         })
         .catch((error) => {

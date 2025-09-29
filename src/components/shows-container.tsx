@@ -16,7 +16,7 @@ import ShowsGrid from '@/components/shows-grid';
 import { useModalStore } from '@/stores/modal';
 import React from 'react';
 import { type Show } from '@/types/index';
-import { type AxiosResponse } from 'axios';
+
 import MovieService from '@/services/MovieService';
 
 interface ShowsContainerProps {
@@ -45,10 +45,9 @@ const ShowsContainer = ({ shows }: ShowsContainerProps) => {
       return;
     }
     try {
-      const response: AxiosResponse<Show> = pathname.includes('/tv-shows')
+      const data: Show = pathname.includes('/tv-shows')
         ? await MovieService.findTvSeries(movieId)
         : await MovieService.findMovie(movieId);
-      const data: Show = response.data;
 
       if (data)
         useModalStore.setState({
