@@ -1,0 +1,14 @@
+node_modules
+.git
+.next
+.env*
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+README.md
+LICENSE
+*.md
+bridge/
+.vercel/
+.next/
+out/

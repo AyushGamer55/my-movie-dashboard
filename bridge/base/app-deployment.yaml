@@ -1,0 +1,54 @@
+#! app-deployment.yaml
+# Generated code, do not edit
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+    name: app
+    namespace: my-movie-dashboard
+    labels:
+        com.docker.compose.project: my-movie-dashboard
+        com.docker.compose.service: app
+spec:
+    replicas: 1
+    selector:
+        matchLabels:
+            com.docker.compose.project: my-movie-dashboard
+            com.docker.compose.service: app
+    strategy:
+        type: Recreate
+    template:
+        metadata:
+            labels:
+                com.docker.compose.project: my-movie-dashboard
+                com.docker.compose.service: app
+                com.docker.compose.network.default: "true"
+        spec:
+            restartPolicy: unless-stopped
+            containers:
+                - name: app
+                  image: my-movie-dashboard-app
+                  imagePullPolicy: IfNotPresent
+                  env:
+                    - name: NEXT_PUBLIC_APP_URL
+                      value: "http://localhost:3000"
+                    - name: NEXT_PUBLIC_FACEBOOK
+                      value: "https://facebook.com/"
+                    - name: NEXT_PUBLIC_GOOGLE_ANALYTICS_ID
+                      value: "G-JD2B21N22S"
+                    - name: NEXT_PUBLIC_INSTAGRAM
+                      value: "https://instagram.com/"
+                    - name: NEXT_PUBLIC_SITE_NAME
+                      value: "Movie Dashboard"
+                    - name: NEXT_PUBLIC_TMDB_API_KEY
+                      value: "4eea230a687d1b0ebe45ce56dc5de44d7"
+                    - name: NEXT_PUBLIC_TMDB_TOKEN
+                      value: "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI0ZWUyMzBhNjg3ZDFiMGViZTQ1Y2U1NmRjNWRlNDRkNyIsIm5iZiI6MTc1ODYyNTI2Ni4xNzI5OTk5LCJzdWIiOiI2OGQyN2RmMjQ3YTcxNTc4ZGU3YTUyYWMiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.K5e12D2yrP-T0kwyt2oZoc3z-mA9q1razEEdIWR3Hwc"
+                    - name: NEXT_PUBLIC_TWITTER
+                      value: "https://x.com/"
+                    - name: NEXT_PUBLIC_YOUTUBE
+                      value: "https://youtube.com/"
+                    - name: NODE_ENV
+                      value: "production"
+                  ports:
+                    - name: app-3000
+                      containerPort: 3000

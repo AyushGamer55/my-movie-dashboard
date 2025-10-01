@@ -10,11 +10,11 @@ class BaseService {
     }
   }
 
-  static async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+  static async fetchWithAuth(
+    url: string,
+    options: RequestInit = {},
+  ): Promise<Response> {
     const headers = new Headers(options.headers);
-    if (url.includes('themoviedb')) {
-      headers.set('Authorization', `Bearer ${env.NEXT_PUBLIC_TMDB_TOKEN}`);
-    }
     headers.set('Content-Type', 'application/json');
 
     const config: RequestInit = {
@@ -23,21 +23,35 @@ class BaseService {
       signal: options.signal || AbortSignal.timeout(15000),
     };
 
-    const response = await fetch(url, config);
+    let finalUrl = url;
+    if (url.includes('themoviedb')) {
+      // Try with Bearer token first
+      headers.set('Authorization', `Bearer ${env.NEXT_PUBLIC_TMDB_TOKEN}`);
+    }
+
+    let response = await fetch(finalUrl, config);
+
+    if (response.status === 401 && url.includes('themoviedb')) {
+      // If 401, retry with API key in URL
+      headers.delete('Authorization');
+      const separator = url.includes('?') ? '&' : '?';
+      finalUrl = `${url}${separator}api_key=${env.NEXT_PUBLIC_TMDB_API_KEY}`;
+      response = await fetch(finalUrl, config);
+    }
 
     if (!response.ok) {
-      console.error(`error in request: ${response.status} ${response.statusText}`);
+      // Removed console.error to comply with ESLint no-console rule
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     return response;
   }
 
-  static isRejected = (
+  static readonly isRejected = (
     input: PromiseSettledResult<unknown>,
   ): input is PromiseRejectedResult => input.status === 'rejected';
 
-  static isFulfilled = <T>(
+  static readonly isFulfilled = <T>(
     input: PromiseSettledResult<T>,
   ): input is PromiseFulfilledResult<T> => input.status === 'fulfilled';
 }

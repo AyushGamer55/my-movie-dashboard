@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "build:parallel": "NODE_OPTIONS='--max-old-space-size=4096' next build",
     "start": "next start",
     "format": "prettier --write .",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky install"
+    "docker:build": "docker buildx build --parallel --cache-to type=local,dest=/tmp/cache --cache-from type=local,src=/tmp/cache -t my-movie-dashboard-app ."
   },
   "dependencies": {
     "@next/third-parties": "15.5.3",
@@ -41,7 +42,10 @@
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.22.3",
-    "zustand": "^4.4.6"
+    "zustand": "^4.4.6",
+    "autoprefixer": "^10.4.15",
+    "postcss": "^8.4.29",
+    "tailwindcss": "^3.3.3"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.8.4",

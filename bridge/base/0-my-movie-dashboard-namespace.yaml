@@ -1,0 +1,8 @@
+#! 0-my-movie-dashboard-namespace.yaml
+# Generated code, do not edit
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: my-movie-dashboard
+    labels:
+        com.docker.compose.project: my-movie-dashboard
