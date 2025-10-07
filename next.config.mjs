@@ -24,13 +24,10 @@ const config = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // swcMinify removed - enabled by default in Next.js 15
   experimental: {
     // Enable parallel builds
     webpackBuildWorker: true,
   },
-  // Enable SWC parallel processing
-  swcMinify: true,
 
   // Fix for multiple lockfiles warning - explicitly set the output file tracing root
   outputFileTracingRoot: process.cwd(),
