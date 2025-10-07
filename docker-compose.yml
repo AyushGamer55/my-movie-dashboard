@@ -1,20 +1,26 @@
+version: "3.8"
 services:
-  app:
+  web:
     build:
       context: .
       dockerfile: Dockerfile
       args:
-        BUILDKIT_INLINE_CACHE: 1
         NEXT_PUBLIC_TMDB_TOKEN: ${NEXT_PUBLIC_TMDB_TOKEN}
         NEXT_PUBLIC_TMDB_API_KEY: ${NEXT_PUBLIC_TMDB_API_KEY}
-        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-"https://my-movie-dashboard.onrender.com"}
         NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME}
       target: runner
     ports:
-      - "10000:3000"
+      - "3000:3000"
     env_file:
       - .env
     environment:
       - NODE_ENV=production
       - SKIP_ENV_VALIDATION=1
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+      - NEXT_PUBLIC_TMDB_TOKEN=${NEXT_PUBLIC_TMDB_TOKEN}
+      - NEXT_PUBLIC_TMDB_API_KEY=${NEXT_PUBLIC_TMDB_API_KEY}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-"https://my-movie-dashboard.onrender.com"}
+      - NEXT_PUBLIC_SITE_NAME=${NEXT_PUBLIC_SITE_NAME}
     restart: unless-stopped
