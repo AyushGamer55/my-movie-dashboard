@@ -34,25 +34,23 @@ class MovieService extends BaseService {
     ]);
     const response = data
       .filter(this.isFulfilled)
-      .map(
-        (item: PromiseFulfilledResult<Show>) => item.value,
-      )
+      .map((item: PromiseFulfilledResult<Show>) => item.value)
       .filter((item: Show) => {
         return pathname.includes(getSlug(item.id, getNameFromShow(item)));
       });
     if (!response?.length) {
-      return Promise.reject('not found');
+      return Promise.reject(new Error('not found'));
     }
     return Promise.resolve<Show>(response[0]);
   }
 
-  static findMovie = cache(async (id: number): Promise<Show> => {
+  static readonly findMovie = cache(async (id: number): Promise<Show> => {
     const url = `${baseUrl}/movie/${id}?append_to_response=keywords`;
     const response = await this.fetchWithAuth(url);
     return response.json();
   });
 
-  static findTvSeries = cache(async (id: number): Promise<Show> => {
+  static readonly findTvSeries = cache(async (id: number): Promise<Show> => {
     const url = `${baseUrl}/tv/${id}?append_to_response=keywords`;
     const response = await this.fetchWithAuth(url);
     return response.json();
@@ -67,24 +65,23 @@ class MovieService extends BaseService {
     return response.json();
   }
 
-  static async getSeasons(
-    id: number,
-    season: number,
-  ): Promise<ISeason> {
+  static async getSeasons(id: number, season: number): Promise<ISeason> {
     const url = `${baseUrl}/tv/${id}/season/${season}`;
     const response = await this.fetchWithAuth(url);
     return response.json();
   }
 
-  static findMovieByIdAndType = cache(async (id: number, type: string): Promise<ShowWithGenreAndVideo> => {
-    const params = new URLSearchParams({
-      language: 'en-US',
-      append_to_response: 'videos,keywords',
-    });
-    const url = `${baseUrl}/${type}/${id}?${params.toString()}`;
-    const response = await this.fetchWithAuth(url);
-    return response.json();
-  });
+  static readonly findMovieByIdAndType = cache(
+    async (id: number, type: string): Promise<ShowWithGenreAndVideo> => {
+      const params = new URLSearchParams({
+        language: 'en-US',
+        append_to_response: 'videos,keywords',
+      });
+      const url = `${baseUrl}/${type}/${id}?${params.toString()}`;
+      const response = await this.fetchWithAuth(url);
+      return response.json();
+    },
+  );
 
   static urlBuilder(req: TmdbRequest) {
     switch (req.requestType) {
@@ -139,65 +136,71 @@ class MovieService extends BaseService {
     }
   }
 
-  static executeRequest = cache(async (req: {
-    requestType: RequestType;
-    mediaType: MediaType;
-    page?: number;
-  }): Promise<TmdbPagingResponse> => {
-    const url = `${baseUrl}${this.urlBuilder(req)}`;
-    const response = await this.fetchWithAuth(url);
-    return response.json();
-  });
+  static readonly executeRequest = cache(
+    async (req: {
+      requestType: RequestType;
+      mediaType: MediaType;
+      page?: number;
+    }): Promise<TmdbPagingResponse> => {
+      const url = `${baseUrl}${this.urlBuilder(req)}`;
+      const response = await this.fetchWithAuth(url);
+      return response.json();
+    },
+  );
 
-  static getShows = cache(async (requests: ShowRequest[]): Promise<CategorizedShows[]> => {
-    const shows: CategorizedShows[] = [];
-    const promises = requests.map((m) => this.executeRequest(m.req));
-    const responses = await Promise.allSettled(promises);
-    for (let i = 0; i < requests.length; i++) {
-      const res = responses[i];
-      if (this.isRejected(res)) {
-        console.warn(`Failed to fetch shows ${requests[i].title}`, res.reason);
-        shows.push({
-          title: requests[i].title,
-          shows: [],
-          visible: requests[i].visible,
-        });
-      } else if (this.isFulfilled(res)) {
-        if (
-          requestTypesNeedUpdateMediaType.indexOf(requests[i].req.requestType) >
-          -1
-        ) {
-          res.value.results.forEach(
-            (f: Show) => (f.media_type = requests[i].req.mediaType),
-          );
+  static readonly getShows = cache(
+    async (requests: ShowRequest[]): Promise<CategorizedShows[]> => {
+      const shows: CategorizedShows[] = [];
+      const promises = requests.map((m) => this.executeRequest(m.req));
+      const responses = await Promise.allSettled(promises);
+      for (let i = 0; i < requests.length; i++) {
+        const res = responses[i];
+        if (this.isRejected(res)) {
+          shows.push({
+            title: requests[i].title,
+            shows: [],
+            visible: requests[i].visible,
+          });
+        } else if (this.isFulfilled(res)) {
+          if (
+            requestTypesNeedUpdateMediaType.indexOf(
+              requests[i].req.requestType,
+            ) > -1
+          ) {
+            res.value.results.forEach(
+              (f: Show) => (f.media_type = requests[i].req.mediaType),
+            );
+          }
+          shows.push({
+            title: requests[i].title,
+            shows: res.value.results,
+            visible: requests[i].visible,
+          });
+        } else {
+          throw new Error('unexpected response');
         }
-        shows.push({
-          title: requests[i].title,
-          shows: res.value.results,
-          visible: requests[i].visible,
-        });
-      } else {
-        throw new Error('unexpected response');
       }
-    }
-    return shows;
-  });
+      return shows;
+    },
+  );
 
-  static searchMovies = cache(async (query: string, page?: number): Promise<TmdbPagingResponse> => {
-    const params = new URLSearchParams({
-      query: query,
-      language: 'en-US',
-      page: (page ?? 1).toString(),
-    });
-    const url = `${baseUrl}/search/multi?${params.toString()}`;
-    const response = await this.fetchWithAuth(url);
-    const data = await response.json();
+  static readonly searchMovies = cache(
+    async (query: string, page?: number): Promise<TmdbPagingResponse> => {
+      const params = new URLSearchParams({
+        query: query,
+        language: 'en-US',
+        page: (page ?? 1).toString(),
+      });
+      const url = `${baseUrl}/search/multi?${params.toString()}`;
+      const response = await this.fetchWithAuth(url);
+      const data = await response.json();
 
-    data.results.sort((a: Show, b: Show) => {
-      return b.popularity - a.popularity;
-    });
-    return data;
-  });
+      data.results.sort((a: Show, b: Show) => {
+        return b.popularity - a.popularity;
+      });
+      return data;
+    },
+  );
 }
 
 export default MovieService;
