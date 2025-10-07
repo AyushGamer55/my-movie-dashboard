@@ -8,8 +8,6 @@ import { Analytics } from '@/components/analytics';
 import { siteConfig } from '@/configs/site';
 import { env } from '@/env.mjs';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import SiteHeader from '@/components/main/site-header';
-import SiteFooter from '@/components/main/site-footer';
 
 import Script from 'next/script';
 
@@ -96,13 +94,12 @@ export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange>
-          <div className="min-h-screen">
-            <SiteHeader />
-            <main>{children}</main>
-            <SiteFooter />
-          </div>
+          {/* <TrpcProvider> */}
+          {children}
+          {/* <TailwindIndicator /> */}
           <Analytics />
           <SpeedInsights />
+          {/* </TrpcProvider> */}
           {env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID && (
             <>
               <Script

@@ -17,7 +17,5 @@ export default async function SearchPage({ searchParams }: SearchProps) {
   }
 
   const shows = await MovieService.searchMovies(resolvedSearchParams.q);
-  return (
-    <SearchContainer query={resolvedSearchParams.q} shows={shows.results} />
-  );
+  return <SearchContainer query={resolvedSearchParams.q} shows={shows.results} />;
 }
