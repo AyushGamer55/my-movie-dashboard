@@ -13,8 +13,6 @@ import SiteFooter from '@/components/main/site-footer';
 
 import Script from 'next/script';
 
-export const runtime = 'edge';
-
 const fontSans = FontSans({
   subsets: ['latin'],
   variable: '--font-sans',
@@ -89,7 +87,7 @@ export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
       <body
         suppressHydrationWarning={true}
         className={cn(
-          'overlflow-y-auto min-h-screen overflow-x-hidden bg-background font-sans antialiased',
+          'min-h-screen overflow-y-auto overflow-x-hidden bg-background font-sans antialiased',
           fontSans.variable,
           fontHeading.variable,
         )}>
